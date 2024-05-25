@@ -64,6 +64,11 @@ void AP_MotorsCoax::set_update_rate(uint16_t speed_hz)
 
 void AP_MotorsCoax::output_to_motors()
 {
+    if ((uint8_t)_spool_state != (uint8_t)former_spool_state){
+        gcs().send_text(MAV_SEVERITY_INFO,"SPOOL_STATE: %d", (uint8_t)_spool_state);
+        former_spool_state = (uint8_t)_spool_state;
+    }
+    
     switch (_spool_state) {
         case SpoolState::SHUT_DOWN:
             // sends minimum values out to the motors

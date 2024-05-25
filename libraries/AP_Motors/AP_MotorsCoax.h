@@ -42,6 +42,7 @@ public:
     // get_motor_mask - returns a bitmask of which outputs are being used for motors or servos (1 means being used)
     //  this can be used to ensure other pwm outputs (i.e. for servos) do not conflict
     uint32_t            get_motor_mask() override;
+    uint8_t former_spool_state = 100; // store former spool state
 
     // Run arming checks
     bool arming_checks(size_t buflen, char *buffer) const override { return AP_Motors::arming_checks(buflen, buffer); }
