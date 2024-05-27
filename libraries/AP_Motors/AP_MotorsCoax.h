@@ -43,6 +43,8 @@ public:
     //  this can be used to ensure other pwm outputs (i.e. for servos) do not conflict
     uint32_t            get_motor_mask() override;
     uint8_t former_spool_state = 100; // store former spool state
+    uint8_t shutdown_spoolstate_tracker = 0; // this parameter is reset to zero every time the _spool_state equals SHUT_DOWN (i.e., zero)
+    uint32_t t_first = -1; // records the first time the rotors are commanded a non-zero throttle after SHUT_DOWN _spool_state
 
     // Run arming checks
     bool arming_checks(size_t buflen, char *buffer) const override { return AP_Motors::arming_checks(buflen, buffer); }

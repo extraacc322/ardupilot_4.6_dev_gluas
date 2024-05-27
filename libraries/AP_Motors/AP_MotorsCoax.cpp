@@ -66,12 +66,61 @@ void AP_MotorsCoax::output_to_motors()
 {
     if ((uint8_t)_spool_state != (uint8_t)former_spool_state){
         gcs().send_text(MAV_SEVERITY_INFO,"SPOOL_STATE: %d", (uint8_t)_spool_state);
+        gcs().send_text(MAV_SEVERITY_INFO,"shutdown_spoolstate_tracker: %d", (uint8_t)shutdown_spoolstate_tracker);
         former_spool_state = (uint8_t)_spool_state;
     }
-    
-    switch (_spool_state) {
+
+    if ((t_first != -1) && (((uint32_t)AP_HAL::millis() - t_first) >= 1000)) {
+        // gcs().send_text(MAV_SEVERITY_INFO,"now: %lu, first: %lu", (uint32_t)AP_HAL::millis(), (uint32_t)t_first);
+        shutdown_spoolstate_tracker = shutdown_spoolstate_tracker + 1;
+    }
+
+    if (shutdown_spoolstate_tracker == 0) {
+        switch (_spool_state) {
         case SpoolState::SHUT_DOWN:
             // sends minimum values out to the motors
+            shutdown_spoolstate_tracker = 0;
+            t_first = -1;
+            rc_write_angle(AP_MOTORS_MOT_1, _roll_radio_passthrough * AP_MOTORS_COAX_SERVO_INPUT_RANGE);
+            rc_write_angle(AP_MOTORS_MOT_2, _pitch_radio_passthrough * AP_MOTORS_COAX_SERVO_INPUT_RANGE);
+            rc_write_angle(AP_MOTORS_MOT_3, -_roll_radio_passthrough * AP_MOTORS_COAX_SERVO_INPUT_RANGE);
+            rc_write_angle(AP_MOTORS_MOT_4, -_pitch_radio_passthrough * AP_MOTORS_COAX_SERVO_INPUT_RANGE);
+            rc_write(AP_MOTORS_MOT_5, output_to_pwm(0));
+            rc_write(AP_MOTORS_MOT_6, output_to_pwm(0));
+            break;
+        case SpoolState::GROUND_IDLE: 
+        // sends output to motors when armed but not flying
+            t_first = AP_HAL::millis(); // record the first time the rotors are commanded a non-zero throttle after SHUT_DOWN spool_state
+
+            for (uint8_t i = 0; i < NUM_ACTUATORS; i++) {
+                rc_write_angle(AP_MOTORS_MOT_1 + i, _spin_up_ratio * _actuator_out[i] * AP_MOTORS_COAX_SERVO_INPUT_RANGE);
+            }
+            set_actuator_with_slew(_actuator[AP_MOTORS_MOT_5], actuator_spin_up_to_ground_idle());
+            // set_actuator_with_slew(_actuator[AP_MOTORS_MOT_6], actuator_spin_up_to_ground_idle());
+            rc_write(AP_MOTORS_MOT_5, output_to_pwm(_actuator[AP_MOTORS_MOT_5]));
+            // rc_write(AP_MOTORS_MOT_6, output_to_pwm(_actuator[AP_MOTORS_MOT_6]));            
+            rc_write(AP_MOTORS_MOT_6, output_to_pwm(0)); // send zero throttle to motor 6 (i.e., 2nd motor)
+            break;
+        case SpoolState::SPOOLING_UP:
+        case SpoolState::THROTTLE_UNLIMITED:
+        case SpoolState::SPOOLING_DOWN:
+            // set motor output based on thrust requests
+            for (uint8_t i = 0; i < NUM_ACTUATORS; i++) {
+                rc_write_angle(AP_MOTORS_MOT_1 + i, _actuator_out[i] * AP_MOTORS_COAX_SERVO_INPUT_RANGE);
+            }
+            set_actuator_with_slew(_actuator[AP_MOTORS_MOT_5], thr_lin.thrust_to_actuator(_thrust_yt_ccw));
+            // set_actuator_with_slew(_actuator[AP_MOTORS_MOT_6], thr_lin.thrust_to_actuator(_thrust_yt_cw));
+            rc_write(AP_MOTORS_MOT_5, output_to_pwm(_actuator[AP_MOTORS_MOT_5]));
+            // rc_write(AP_MOTORS_MOT_6, output_to_pwm(_actuator[AP_MOTORS_MOT_6]));
+            rc_write(AP_MOTORS_MOT_6, output_to_pwm(0)); // send zero throttle to motor 6 (i.e., 2nd motor)
+            break;
+        }
+    } else if (shutdown_spoolstate_tracker > 0) {
+        switch (_spool_state) {
+        case SpoolState::SHUT_DOWN:
+            // sends minimum values out to the motors
+            shutdown_spoolstate_tracker = 0;
+            t_first = -1;
             rc_write_angle(AP_MOTORS_MOT_1, _roll_radio_passthrough * AP_MOTORS_COAX_SERVO_INPUT_RANGE);
             rc_write_angle(AP_MOTORS_MOT_2, _pitch_radio_passthrough * AP_MOTORS_COAX_SERVO_INPUT_RANGE);
             rc_write_angle(AP_MOTORS_MOT_3, -_roll_radio_passthrough * AP_MOTORS_COAX_SERVO_INPUT_RANGE);
@@ -101,6 +150,7 @@ void AP_MotorsCoax::output_to_motors()
             rc_write(AP_MOTORS_MOT_5, output_to_pwm(_actuator[AP_MOTORS_MOT_5]));
             rc_write(AP_MOTORS_MOT_6, output_to_pwm(_actuator[AP_MOTORS_MOT_6]));
             break;
+        }
     }
 }
 
