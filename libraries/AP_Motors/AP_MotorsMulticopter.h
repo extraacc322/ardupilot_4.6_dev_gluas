@@ -166,6 +166,9 @@ protected:
     AP_Int8             _throttle_hover_learn;  // enable/disabled hover thrust learning
     AP_Int8             _disarm_disable_pwm;    // disable PWM output while disarmed
 
+    // For AP_MotorsCoax
+    AP_Int32            _time_betw_rotor_startups;  //(For AP_MotorsCoax) During rotor startup sequence, this is the time between upper rotor startup and lower rotor startup. This time difference is set to avoid lower rotor of GLUAS impacting upper rotor
+
     // Maximum lean angle of yaw servo in degrees. This is specific to tricopter
     AP_Float            _yaw_servo_angle_max_deg;
 

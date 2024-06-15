@@ -68,11 +68,11 @@ void AP_MotorsCoax::output_to_motors()
         gcs().send_text(MAV_SEVERITY_INFO,"SPOOL_STATE: %d", (uint8_t)_spool_state);
         gcs().send_text(MAV_SEVERITY_INFO,"shutdown_spoolstate_tracker: %d", (uint8_t)shutdown_spoolstate_tracker);
         former_spool_state = (uint8_t)_spool_state;
-        gcs().send_text(MAV_SEVERITY_INFO,"_actuator_out: %.2f", (float)_actuator_out[0]);
+        // gcs().send_text(MAV_SEVERITY_INFO,"_actuator_out: %.2f", (float)_actuator_out[0]); // was trying to check the boundaries of _actuator_out[i], i=1,2,3,4
     }
 
-    if ((t_first != -1) && (((uint32_t)AP_HAL::millis() - t_first) >= 1000)) {
-        // gcs().send_text(MAV_SEVERITY_INFO,"now: %lu, first: %lu", (uint32_t)AP_HAL::millis(), (uint32_t)t_first);
+    if ((t_first != -1) && (((uint32_t)AP_HAL::millis() - t_first) >= (uint32_t)_time_betw_rotor_startups)) {
+        // gcs().send_text(MAV_SEVERITY_INFO,"now: %lu, first: %lu", (uint32_t)AP_HAL::millis(), (uint32_t)t_first); // checking the time diff between now and t_first
         shutdown_spoolstate_tracker = shutdown_spoolstate_tracker + 1;
     }
 
