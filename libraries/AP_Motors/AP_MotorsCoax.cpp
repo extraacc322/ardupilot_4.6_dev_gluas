@@ -82,10 +82,10 @@ void AP_MotorsCoax::output_to_motors()
             // sends minimum values out to the motors
             shutdown_spoolstate_tracker = 0;
             t_first = -1;
-            rc_write_angle(AP_MOTORS_MOT_1, 0 * AP_MOTORS_COAX_SERVO_INPUT_RANGE); // servos remain at trim before the rotor startup sequence is executed
-            rc_write_angle(AP_MOTORS_MOT_2, 0 * AP_MOTORS_COAX_SERVO_INPUT_RANGE); // servos remain at trim before the rotor startup sequence is executed
-            rc_write_angle(AP_MOTORS_MOT_3, -0 * AP_MOTORS_COAX_SERVO_INPUT_RANGE);  // servos remain at trim before the rotor startup sequence is executed
-            rc_write_angle(AP_MOTORS_MOT_4, -0 * AP_MOTORS_COAX_SERVO_INPUT_RANGE); // servos remain at trim before the rotor startup sequence is executed
+            rc_write_angle(AP_MOTORS_MOT_1, _keep_servo_trim * _roll_radio_passthrough * AP_MOTORS_COAX_SERVO_INPUT_RANGE); 
+            rc_write_angle(AP_MOTORS_MOT_2, _keep_servo_trim * _pitch_radio_passthrough * AP_MOTORS_COAX_SERVO_INPUT_RANGE);
+            rc_write_angle(AP_MOTORS_MOT_3, -_keep_servo_trim * _roll_radio_passthrough * AP_MOTORS_COAX_SERVO_INPUT_RANGE);
+            rc_write_angle(AP_MOTORS_MOT_4, -_keep_servo_trim * _pitch_radio_passthrough * AP_MOTORS_COAX_SERVO_INPUT_RANGE);
             rc_write(AP_MOTORS_MOT_5, output_to_pwm(0));
             rc_write(AP_MOTORS_MOT_6, output_to_pwm(0));
             break;
@@ -94,7 +94,7 @@ void AP_MotorsCoax::output_to_motors()
             t_first = AP_HAL::millis(); // record the first time the rotors are commanded a non-zero throttle after SHUT_DOWN spool_state
 
             for (uint8_t i = 0; i < NUM_ACTUATORS; i++) {
-                rc_write_angle(AP_MOTORS_MOT_1 + i, _spin_up_ratio * 0 * AP_MOTORS_COAX_SERVO_INPUT_RANGE); // servos remain at trim before the rotor startup sequence is executed
+                rc_write_angle(AP_MOTORS_MOT_1 + i, _keep_servo_trim * _spin_up_ratio * _actuator_out[i] * AP_MOTORS_COAX_SERVO_INPUT_RANGE);
             }
             set_actuator_with_slew(_actuator[AP_MOTORS_MOT_5], actuator_spin_up_to_ground_idle());
             rc_write(AP_MOTORS_MOT_5, output_to_pwm(_actuator[AP_MOTORS_MOT_5]));
@@ -104,8 +104,8 @@ void AP_MotorsCoax::output_to_motors()
         case SpoolState::THROTTLE_UNLIMITED:
         case SpoolState::SPOOLING_DOWN:
             // set motor output based on thrust requests
-            for (uint8_t i = 0; i < NUM_ACTUATORS; i++) {
-                rc_write_angle(AP_MOTORS_MOT_1 + i, 0 * AP_MOTORS_COAX_SERVO_INPUT_RANGE); // servos remain at trim before the rotor startup sequence is executed
+            for (uint8_t i = 0; i < NUM_ACTUATORS; i++) { 
+                rc_write_angle(AP_MOTORS_MOT_1 + i, _keep_servo_trim * _actuator_out[i] * AP_MOTORS_COAX_SERVO_INPUT_RANGE); 
             }
             set_actuator_with_slew(_actuator[AP_MOTORS_MOT_5], thr_lin.thrust_to_actuator(_thrust_yt_ccw));
             rc_write(AP_MOTORS_MOT_5, output_to_pwm(_actuator[AP_MOTORS_MOT_5]));
