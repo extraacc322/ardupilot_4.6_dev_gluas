@@ -64,12 +64,12 @@ void AP_MotorsCoax::set_update_rate(uint16_t speed_hz)
 
 void AP_MotorsCoax::output_to_motors()
 {
-    if ((uint8_t)_spool_state != (uint8_t)former_spool_state){
-        gcs().send_text(MAV_SEVERITY_INFO,"SPOOL_STATE: %d", (uint8_t)_spool_state);
-        gcs().send_text(MAV_SEVERITY_INFO,"shutdown_spoolstate_tracker: %d", (uint8_t)shutdown_spoolstate_tracker);
-        former_spool_state = (uint8_t)_spool_state;
-        // gcs().send_text(MAV_SEVERITY_INFO,"_actuator_out: %.2f", (float)_actuator_out[0]); // was trying to check the boundaries of _actuator_out[i], i=1,2,3,4
-    }
+    // if ((uint8_t)_spool_state != (uint8_t)former_spool_state){
+    //     gcs().send_text(MAV_SEVERITY_INFO,"SPOOL_STATE: %d", (uint8_t)_spool_state);
+    //     gcs().send_text(MAV_SEVERITY_INFO,"shutdown_spoolstate_tracker: %d", (uint8_t)shutdown_spoolstate_tracker);
+    //     former_spool_state = (uint8_t)_spool_state;
+    //     // gcs().send_text(MAV_SEVERITY_INFO,"_actuator_out: %.2f", (float)_actuator_out[0]); // was trying to check the boundaries of _actuator_out[i], i=1,2,3,4
+    // }
 
     if ((t_first != -1) && (((uint32_t)AP_HAL::millis() - t_first) >= (uint32_t)_time_betw_rotor_startups)) {
         // gcs().send_text(MAV_SEVERITY_INFO,"now: %lu, first: %lu", (uint32_t)AP_HAL::millis(), (uint32_t)t_first); // checking the time diff between now and t_first
@@ -82,10 +82,13 @@ void AP_MotorsCoax::output_to_motors()
             // sends minimum values out to the motors
             shutdown_spoolstate_tracker = 0;
             t_first = -1;
-            rc_write_angle(AP_MOTORS_MOT_1, _keep_servo_trim * _roll_radio_passthrough * AP_MOTORS_COAX_SERVO_INPUT_RANGE); 
-            rc_write_angle(AP_MOTORS_MOT_2, _keep_servo_trim * _pitch_radio_passthrough * AP_MOTORS_COAX_SERVO_INPUT_RANGE);
-            rc_write_angle(AP_MOTORS_MOT_3, -_keep_servo_trim * _roll_radio_passthrough * AP_MOTORS_COAX_SERVO_INPUT_RANGE);
-            rc_write_angle(AP_MOTORS_MOT_4, -_keep_servo_trim * _pitch_radio_passthrough * AP_MOTORS_COAX_SERVO_INPUT_RANGE);
+            for (uint8_t i = 0; i < NUM_ACTUATORS; i++) { 
+                rc_write_angle(AP_MOTORS_MOT_1 + i, _keep_servo_trim * _actuator_out[i] * AP_MOTORS_COAX_SERVO_INPUT_RANGE); 
+            }
+            // rc_write_angle(AP_MOTORS_MOT_1, _keep_servo_trim * _roll_radio_passthrough * AP_MOTORS_COAX_SERVO_INPUT_RANGE); 
+            // rc_write_angle(AP_MOTORS_MOT_2, _keep_servo_trim * _pitch_radio_passthrough * AP_MOTORS_COAX_SERVO_INPUT_RANGE);
+            // rc_write_angle(AP_MOTORS_MOT_3, -_keep_servo_trim * _roll_radio_passthrough * AP_MOTORS_COAX_SERVO_INPUT_RANGE);
+            // rc_write_angle(AP_MOTORS_MOT_4, -_keep_servo_trim * _pitch_radio_passthrough * AP_MOTORS_COAX_SERVO_INPUT_RANGE);
             rc_write(AP_MOTORS_MOT_5, output_to_pwm(0));
             rc_write(AP_MOTORS_MOT_6, output_to_pwm(0));
             break;
@@ -118,10 +121,13 @@ void AP_MotorsCoax::output_to_motors()
             // sends minimum values out to the motors
             shutdown_spoolstate_tracker = 0;
             t_first = -1;
-            rc_write_angle(AP_MOTORS_MOT_1, _roll_radio_passthrough * AP_MOTORS_COAX_SERVO_INPUT_RANGE);
-            rc_write_angle(AP_MOTORS_MOT_2, _pitch_radio_passthrough * AP_MOTORS_COAX_SERVO_INPUT_RANGE);
-            rc_write_angle(AP_MOTORS_MOT_3, -_roll_radio_passthrough * AP_MOTORS_COAX_SERVO_INPUT_RANGE);
-            rc_write_angle(AP_MOTORS_MOT_4, -_pitch_radio_passthrough * AP_MOTORS_COAX_SERVO_INPUT_RANGE);
+            // rc_write_angle(AP_MOTORS_MOT_1, _roll_radio_passthrough * AP_MOTORS_COAX_SERVO_INPUT_RANGE);
+            // rc_write_angle(AP_MOTORS_MOT_2, _pitch_radio_passthrough * AP_MOTORS_COAX_SERVO_INPUT_RANGE);
+            // rc_write_angle(AP_MOTORS_MOT_3, -_roll_radio_passthrough * AP_MOTORS_COAX_SERVO_INPUT_RANGE);
+            // rc_write_angle(AP_MOTORS_MOT_4, -_pitch_radio_passthrough * AP_MOTORS_COAX_SERVO_INPUT_RANGE);
+            for (uint8_t i = 0; i < NUM_ACTUATORS; i++) { 
+                rc_write_angle(AP_MOTORS_MOT_1 + i, _actuator_out[i] * AP_MOTORS_COAX_SERVO_INPUT_RANGE); 
+            }
             rc_write(AP_MOTORS_MOT_5, output_to_pwm(0));
             rc_write(AP_MOTORS_MOT_6, output_to_pwm(0));
             break;
